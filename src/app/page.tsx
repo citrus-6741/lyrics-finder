@@ -1,65 +1,152 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [artist, setArtist] = useState("");
+  const [title, setTitle] = useState("");
+  const [album, setAlbum] = useState("");
+
+  const [sources, setSources] = useState<string[]>([
+    "musixmatch",
+    "lyricsplus",
+    "lrclib",
+  ]);
+  const [type, setType] = useState<"line" | "sync" | "word">("sync");
+
+  const router = useRouter();
+
+  const toggleSource = (s: string) => {
+    setSources((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (artist.trim() && title.trim()) {
+      const params = new URLSearchParams();
+      params.set("artist", artist.trim());
+      params.set("title", title.trim());
+      if (album.trim()) params.set("album", album.trim());
+      params.set("sources", sources.join(","));
+      params.set("type", type);
+      router.push(`/lyrics?${params.toString()}`);
+      return;
+    }
+
+    if (artist.trim() && album.trim() && !title.trim()) {
+      router.push(
+        `/album?artist=${encodeURIComponent(artist.trim())}&album=${encodeURIComponent(album.trim())}`,
+      );
+      return;
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="w-full max-w-lg">
+        <h1 className="text-2xl font-light text-text mb-8 text-center">
+          lyrics search
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-text-faint font-mono uppercase tracking-widest">
+              artist
+            </label>
+            <input
+              type="text"
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              required
+              className="bg-card border border-border text-text px-4 py-3 text-sm font-mono focus:outline-none focus:border-text-muted transition-colors"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-text-faint font-mono uppercase tracking-widest">
+              title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="bg-card border border-border text-text px-4 py-3 text-sm font-mono focus:outline-none focus:border-text-muted transition-colors"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-text-faint font-mono uppercase tracking-widest">
+              album
+            </label>
+            <input
+              type="text"
+              value={album}
+              onChange={(e) => setAlbum(e.target.value)}
+              className="bg-card border border-border text-text px-4 py-3 text-sm font-mono focus:outline-none focus:border-text-muted transition-colors"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] text-text-faint font-mono uppercase tracking-widest">
+              sources
+            </p>
+            <div className="flex gap-4">
+              {["musixmatch", "lyricsplus", "lrclib"].map((s) => (
+                <label
+                  key={s}
+                  className="flex items-center gap-2 text-xs font-mono text-text-muted"
+                >
+                  <input
+                    type="checkbox"
+                    checked={sources.includes(s)}
+                    onChange={() => toggleSource(s)}
+                    className="accent-text"
+                  />
+                  {s}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] text-text-faint font-mono uppercase tracking-widest">
+              type
+            </p>
+            <div className="flex gap-4">
+              {[
+                ["line", "Line (no timestamps)"],
+                ["sync", "Synced (line timed)"],
+                ["word", "Word‑by‑word"],
+              ].map(([val, label]) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 text-xs font-mono text-text-muted"
+                >
+                  <input
+                    type="radio"
+                    name="type"
+                    value={val}
+                    checked={type === val}
+                    onChange={() => setType(val as any)}
+                    className="accent-text"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-card hover:bg-card-hover border border-border text-text font-mono py-3 text-sm tracking-widest uppercase transition-colors duration-500"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            search
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }
