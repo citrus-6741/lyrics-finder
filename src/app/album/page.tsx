@@ -156,6 +156,7 @@ function AlbumPageContent() {
   const album = searchParams.get("album") || "";
 
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
   const [lyricsMap, setLyricsMap] = useState<Map<number, LyricData>>(new Map());
   const [fetching, setFetching] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -196,10 +197,16 @@ function AlbumPageContent() {
       `/api/album/tracklist?artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`,
     )
       .then((r) => r.json())
-      .then((data: Track[]) => {
-        setTracks(data);
-        const cover = data.find((t) => t.cover)?.cover;
-        if (cover) setAlbumCover(cover);
+      .then((data) => {
+        if (data.tracks) {
+          setTracks(data.tracks);
+          setCandidates([]);
+          const cover = data.tracks.find((t: Track) => t.cover)?.cover;
+          if (cover) setAlbumCover(cover);
+        } else if (data.candidates) {
+          setCandidates(data.candidates);
+          setTracks([]);
+        }
       })
       .catch(() => setTracks([]))
       .finally(() => setLoadingTracklist(false));
@@ -217,6 +224,26 @@ function AlbumPageContent() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const selectCandidate = async (candidate: any) => {
+    setLoadingTracklist(true);
+    const params = new URLSearchParams({ artist, album });
+    if (candidate.id.startsWith("deezer:"))
+      params.set("deezer_id", candidate.id.slice(7));
+    else if (candidate.id.startsWith("qobuz:"))
+      params.set("qobuz_id", candidate.id.slice(6));
+    else if (candidate.id.startsWith("mb:"))
+      params.set("mb_id", candidate.id.slice(3));
+    const res = await fetch(`/api/album/tracklist?${params.toString()}`);
+    const data = await res.json();
+    if (data.tracks) {
+      setTracks(data.tracks);
+      setCandidates([]);
+      const cover = data.tracks.find((t: Track) => t.cover)?.cover;
+      if (cover) setAlbumCover(cover);
+    }
+    setLoadingTracklist(false);
+  };
 
   const fetchAllLyrics = async () => {
     setFetching(true);
@@ -376,6 +403,50 @@ function AlbumPageContent() {
         <p className="text-text-muted font-mono text-sm">
           missing artist/album
         </p>
+      </main>
+    );
+  }
+
+  if (candidates.length > 0) {
+    return (
+      <main className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-6 py-16">
+          <button
+            onClick={() => router.back()}
+            className="text-xs text-text-faint hover:text-text-muted font-mono mb-8 transition-colors"
+          >
+            ← back
+          </button>
+          <h1 className="text-2xl font-light text-text mb-8 text-center">
+            select album version
+          </h1>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {candidates.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => selectCandidate(c)}
+                className="border border-border bg-card hover:bg-card-hover p-4 text-left transition-colors"
+              >
+                {c.cover && (
+                  <img
+                    src={c.cover}
+                    alt=""
+                    className="w-16 h-16 object-cover mb-2"
+                  />
+                )}
+                <p className="text-sm text-text font-mono truncate">
+                  {c.title}
+                </p>
+                <p className="text-xs text-text-muted font-mono capitalize">
+                  {c.artist}
+                </p>
+                <p className="text-[10px] text-text-faint font-mono mt-1">
+                  {c.tracks} tracks
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
       </main>
     );
   }
