@@ -9,8 +9,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lyrics App",
-  description: "Search and download synced lyrics",
+  title: "lyrics",
+  description: "search, download lyrics.",
 };
 
 export default function RootLayout({
