@@ -205,7 +205,7 @@ export async function fetchMusixmatch(
           format: "json",
           commontrack_id: String(trackId),
           usertoken: tokenUsed,
-          app_id: "web-desktop-app-v1.0",
+          app_id: "mac-ios-v2.0",
         });
         const url = `https://apic-appmobile.musixmatch.com/ws/1.1/track.richsync.get?${params.toString()}`;
         const res = await fetch(url);
@@ -246,7 +246,7 @@ export async function fetchMusixmatch(
       q_track: title,
       subtitle_format: "mxm",
       usertoken: usableToken,
-      app_id: "web-desktop-app-v1.0",
+      app_id: "mac-ios-v2.0",
     });
     const url = `https://apic-appmobile.musixmatch.com/ws/1.1/macro.subtitles.get?${params.toString()}`;
     console.log(`[MXM] Fetching: ${url.replace(usableToken, "***")}`);
